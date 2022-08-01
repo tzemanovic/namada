@@ -112,6 +112,8 @@ if steps_done != 2:
 template = download_genesis_template(REPOSITORY_OWNER, template_name, TMP_DIRECTORY)
 template_command_outcome = generate_genesis_template(TMP_DIRECTORY, 'namada-{}'.format(short_sha), TMP_DIRECTORY)
 
+log(template_command_outcome.stdout.splitlines())
+
 genesis_folder_path = template_command_outcome.stdout.splitlines()[-2].split(" ")[4]
 release_archive_path = template_command_outcome.stdout.splitlines()[-1].split(" ")[4]
 
