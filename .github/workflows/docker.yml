@@ -52,7 +52,7 @@ jobs:
           context: .
           file: ${{ matrix.make.path }}/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ matrix.make.image }}-${{ github.event.inputs.tag  }}
+          tags: ghcr.io/fraccaman:${{ matrix.make.image }}-${{ github.event.inputs.tag  }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ matrix.make.image }}-${{ github.event.inputs.tag  }}
           cache-to: type=inline
