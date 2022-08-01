@@ -23,7 +23,7 @@ def download_genesis_template(repository_owner:str, template_name: str, to: str)
     
 
 def generate_genesis_template(folder: str, chain_prefix: str):
-    command = "chmod +x {0}/namadac && {0}/namadac utils init-network --chain-prefix {} --genesis-path {0}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/wasm/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, chain_prefix)
+    command = "chmod +x {0}/namadac && {0}/namadac utils init-network --chain-prefix {1} --genesis-path {0}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/wasm/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, chain_prefix)
     print(command)
     return subprocess.run(command.split(" "), capture_output=True)
 
