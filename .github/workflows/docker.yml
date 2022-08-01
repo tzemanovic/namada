@@ -7,6 +7,11 @@ on:
         description: 'The docker image tag'
         required: true
 
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
 env:
   GIT_LFS_SKIP_SMUDGE: 1
 
