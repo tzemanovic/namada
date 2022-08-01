@@ -22,8 +22,9 @@ def download_genesis_template(repository_owner:str, template_name: str, to: str)
     return subprocess.run(["curl", "-s", url, "-o", "{}/template.toml".format(to)])
     
 
-def generate_genesis_template(binary_path: str, chain_prefix: str, folder: str):
-    command = "chmod +x {}/namada* && {}/namadac utils init-network --chain-prefix {} --genesis-path {}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {}/wasm/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, binary_path, chain_prefix, folder, folder)
+def generate_genesis_template(folder: str, chain_prefix: str):
+    command = "chmod +x {0}/namadac && {0}/namadac utils init-network --chain-prefix {} --genesis-path {0}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/wasm/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, chain_prefix)
+    print(command)
     return subprocess.run(command.split(" "), capture_output=True)
 
 def log(data: str):
@@ -56,6 +57,7 @@ short_sha = head_sha[0:7]
 
 parameters = re.search('\[([^\]]+)', pr_comment).group(1).split(', ')
 template_name = parameters[0]
+template_name = 7 if len(parameters) == 1 else parameters[1]
 
 log("Using {} genesis template.".format(template_name))
 
@@ -110,7 +112,7 @@ if steps_done != 2:
     exit(1)
 
 template = download_genesis_template(REPOSITORY_OWNER, template_name, TMP_DIRECTORY)
-template_command_outcome = generate_genesis_template(TMP_DIRECTORY, 'namada-{}'.format(short_sha), TMP_DIRECTORY)
+template_command_outcome = generate_genesis_template(TMP_DIRECTORY, 'namada-{}'.format(short_sha))
 
 if template_command_outcome.returncode != 0:
     print(template_command_outcome.stderr)
