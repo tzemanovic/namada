@@ -57,6 +57,8 @@ short_sha = head_sha[0:7]
 parameters = re.search('\[([^\]]+)', pr_comment).group(1).split(', ')
 template_name = parameters[0]
 
+log("Using {} genesis template.".format(template_name))
+
 artifacts = api.actions.list_artifacts_for_repo(per_page=ARTIFACT_PER_PAGE)
 steps_done = 0
 
