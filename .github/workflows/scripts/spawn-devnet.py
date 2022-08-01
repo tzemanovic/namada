@@ -23,7 +23,7 @@ def download_genesis_template(repository_owner:str, template_name: str, to: str)
     
 
 def generate_genesis_template(binary_path: str, chain_prefix: str, folder: str):
-    command = "chmod +x {}/namada* && {}/namadac utils init-network --chain-prefix {} --genesis-path {}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {}/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, binary_path, chain_prefix, folder, folder)
+    command = "chmod +x {}/namada* && {}/namadac utils init-network --chain-prefix {} --genesis-path {}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {}/wasm/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, binary_path, chain_prefix, folder, folder)
     return subprocess.run(command.split(" "), capture_output=True)
 
 def log(data: str):
@@ -112,7 +112,12 @@ if steps_done != 2:
 template = download_genesis_template(REPOSITORY_OWNER, template_name, TMP_DIRECTORY)
 template_command_outcome = generate_genesis_template(TMP_DIRECTORY, 'namada-{}'.format(short_sha), TMP_DIRECTORY)
 
-print(template_command_outcome.stdout.splitlines())
+if template_command_outcome.returncode != 0:
+    print(template_command_outcome.stderr)
+    exit(1)
+
+print(template_command_outcome)
+print(template_command_outcome.stdout)
 
 genesis_folder_path = template_command_outcome.stdout.splitlines()[-2].split(" ")[4]
 release_archive_path = template_command_outcome.stdout.splitlines()[-1].split(" ")[4]
