@@ -19,8 +19,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        comment: ["pls publish wasm", "pls update wasm", "pls spawn devnet"]
-        command: [publish-wasm.py, update-wasm.py, spawn-devnet.py]
+        make:
+          - name: Update wasm
+            comment: pls update wasm
+            command: update-wasm.py
+          - name: Publish wasm
+            comment: pls publish wasm
+            command: publish-wasm.py
+          - name: Spawn devnet
+            comment: pls spawn devnet
+            command: spawn-devnet.py
 
     steps:
       - name: Configure AWS Credentials
@@ -41,7 +49,7 @@ jobs:
         if: steps.check.outputs.triggered == 'true'
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
-      - name: Run task
+      - name: Run task ${{ matrix.make.name }}
         if: steps.check.outputs.triggered == 'true'
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
@@ -51,7 +59,7 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           pip3 install ghapi >/dev/null 2>&1
-          python3 .github/workflows/scripts/${{ matrix.command }}
+          python3 .github/workflows/scripts/${{ matrix.make.command }}
       - name: Comment not found
         if: steps.check.outputs.triggered != 'true'
         run: echo "Comment $COMMENT not found"
