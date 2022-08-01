@@ -19,7 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        command: [publish-wasm.py, update-wasm.py]
+        comment: ["pls publish wasm", "pls update wasm", "pls spawn devnet"]
+        command: [publish-wasm.py, update-wasm.py, spawn-devnet.py]
 
     steps:
       - name: Configure AWS Credentials
@@ -27,13 +28,21 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::375643557360:role/anoma-github-action-ci-master
           aws-region: eu-west-1
+      - uses: khan/pull-request-comment-trigger@v1.1.0
+        id: check
+        with: 
+          trigger: ${{ matrix.make.comment }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: xt0rted/pull-request-comment-branch@v1
+        if: steps.check.outputs.triggered == 'true'
         id: comment-branch
       - uses: actions/checkout@v3
-        if: success()
+        if: steps.check.outputs.triggered == 'true'
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
       - name: Run task
+        if: steps.check.outputs.triggered == 'true'
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,3 +52,8 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           pip3 install ghapi >/dev/null 2>&1
           python3 .github/workflows/scripts/${{ matrix.command }}
+      - name: Comment not found
+        if: steps.check.outputs.triggered != 'true'
+        run: echo "Comment $COMMENT not found"
+        env:
+          COMMENT: ${{ matrix.make.comment }}
