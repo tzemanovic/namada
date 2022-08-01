@@ -23,7 +23,7 @@ def download_genesis_template(repository_owner:str, template_name: str, to: str)
     
 
 def generate_genesis_template(binary_path: str, chain_prefix: str, folder: str):
-    command = "{}/namadac utils init-network --chain-prefix {} --genesis-path {}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {}/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(binary_path, chain_prefix, folder, folder)
+    command = "chmod +x {}/namada* && {}/namadac utils init-network --chain-prefix {} --genesis-path {}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {}/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, binary_path, chain_prefix, folder, folder)
     return subprocess.run(command.split(" "), capture_output=True)
 
 def log(data: str):
@@ -47,16 +47,12 @@ user_membership = read_org_api.teams.get_membership_for_user_in_org(
 if user_membership['state'] != 'active':
     exit(0)
 
-print(comment_event)
-
 pr_comment = comment_event['event']['comment']['body']
 pr_number = comment_event['event']['issue']['number']
 
 pr_info = api.pulls.get(pr_number)
 head_sha = pr_info['head']['sha']
 short_sha = head_sha[0:7]
-
-print(pr_comment)
 
 parameters = re.search('\[([^\]]+)', pr_comment).group(1).split(', ')
 template_name = parameters[0]
