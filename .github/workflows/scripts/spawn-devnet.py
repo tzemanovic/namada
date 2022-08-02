@@ -128,19 +128,13 @@ if template_command_outcome.returncode != 0:
     log(template_command_outcome)
     exit(1)
 
-debug("{}/template.toml".format(TMP_DIRECTORY))
-debug("{}/checksums.json".format(TMP_DIRECTORY))
-
 template_command_outcome = generate_genesis_template(TMP_DIRECTORY, 'namada-{}'.format(short_sha))
 if template_command_outcome.returncode != 0:
     log(template_command_outcome.stderr)
     exit(1)
 
-log(template_command_outcome)
-log(template_command_outcome.stdout)
-
-genesis_folder_path = template_command_outcome.stdout.splitlines()[-2].split(" ")[4]
-release_archive_path = template_command_outcome.stdout.splitlines()[-1].split(" ")[4]
+genesis_folder_path = template_command_outcome.stdout.decode('utf-8').splitlines()[-2].split(" ")[4]
+release_archive_path = template_command_outcome.stdout.decode('utf-8').splitlines()[-1].split(" ")[4]
 
 log("Genesis folder: {}".format(genesis_folder_path))
 log("Archive: {}".format(release_archive_path))
