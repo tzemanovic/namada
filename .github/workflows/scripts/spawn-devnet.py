@@ -63,6 +63,7 @@ template_name = parameters[0]
 retention_period = 7 if len(parameters) == 1 else parameters[1]
 
 log("Using {} genesis template.".format(template_name))
+log("Using a {} days retention period.".format(retention_period))
 
 artifacts = api.actions.list_artifacts_for_repo(per_page=ARTIFACT_PER_PAGE)
 steps_done = 0
