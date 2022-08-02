@@ -30,6 +30,14 @@ def generate_genesis_template(folder: str, chain_prefix: str):
     print(command.split(' '))
     return subprocess.run(command.split(" "), capture_output=True)
 
+def debug(file_path: str):
+    output = subprocess.run(['cat', file_path], capture_output=True)
+    if output.returncode != 0:
+        print(output.stderr)
+        exit(1)
+    else:
+        print(output.stdout)
+
 def log(data: str):
     print(data)
 
@@ -119,6 +127,9 @@ template_command_outcome = download_genesis_template(REPOSITORY_OWNER, template_
 if template_command_outcome.returncode != 0:
     log(template_command_outcome)
     exit(1)
+
+debug("{}/template.toml".format(TMP_DIRECTORY))
+debug("{}/checksums.json".format(TMP_DIRECTORY))
 
 template_command_outcome = generate_genesis_template(TMP_DIRECTORY, 'namada-{}'.format(short_sha))
 if template_command_outcome.returncode != 0:
