@@ -26,7 +26,7 @@ def generate_genesis_template(folder: str, chain_prefix: str):
     permissions_command_outcome = subprocess.run(["chmod", "+x", "{}/namadac".format(folder)], capture_output=True)
     if permissions_command_outcome.returncode != 0:
         return permissions_command_outcome
-    command = "{0}/namadac utils init-network --chain-prefix {1} --genesis-path {0}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/wasm/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, chain_prefix)
+    command = "{0}/namadac utils init-network --chain-prefix {1} --genesis-path {0}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, chain_prefix)
     print(command.split(' '))
     return subprocess.run(command.split(" "), capture_output=True)
 
