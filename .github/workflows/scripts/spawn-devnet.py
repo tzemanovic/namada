@@ -153,7 +153,7 @@ genesis_folder_path = template_command_outcome.stdout.decode(
     'utf-8').splitlines()[-2].split(" ")[4]
 release_archive_path = template_command_outcome.stdout.decode(
     'utf-8').splitlines()[-1].split(" ")[4]
-chain_id = genesis_folder_path.split("/")[1].split('.')[0]
+chain_id = genesis_folder_path.split("/")[1][:-5]
 
 log("ChainId: {}".format(chain_id))
 log("Genesis folder: {}".format(genesis_folder_path))
