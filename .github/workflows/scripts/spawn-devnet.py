@@ -60,7 +60,7 @@ short_sha = head_sha[0:7]
 
 parameters = re.search('\[([^\]]+)', pr_comment).group(1).split(', ')
 template_name = parameters[0]
-template_name = 7 if len(parameters) == 1 else parameters[1]
+retention_period = 7 if len(parameters) == 1 else parameters[1]
 
 log("Using {} genesis template.".format(template_name))
 
@@ -114,15 +114,18 @@ if steps_done != 2:
     print("Bad binaries/wasm!")
     exit(1)
 
-template = download_genesis_template(REPOSITORY_OWNER, template_name, TMP_DIRECTORY)
-template_command_outcome = generate_genesis_template(TMP_DIRECTORY, 'namada-{}'.format(short_sha))
-
+template_command_outcome = download_genesis_template(REPOSITORY_OWNER, template_name, TMP_DIRECTORY)
 if template_command_outcome.returncode != 0:
-    print(template_command_outcome.stderr)
+    log(template_command_outcome)
     exit(1)
 
-print(template_command_outcome)
-print(template_command_outcome.stdout)
+template_command_outcome = generate_genesis_template(TMP_DIRECTORY, 'namada-{}'.format(short_sha))
+if template_command_outcome.returncode != 0:
+    log(template_command_outcome.stderr)
+    exit(1)
+
+log(template_command_outcome)
+log(template_command_outcome.stdout)
 
 genesis_folder_path = template_command_outcome.stdout.splitlines()[-2].split(" ")[4]
 release_archive_path = template_command_outcome.stdout.splitlines()[-1].split(" ")[4]
