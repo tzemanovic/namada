@@ -23,7 +23,7 @@ def upload_chain_data_archive(path: str, bucket: str):
 
 
 def zip_setup_folder(chain_id: str):
-    return subprocess.run(["zip" "-r", "{}-setup.zip".format(chain_id), ".anoma"], capture_output=True) 
+    return subprocess.run(["zip", "-r", "{}-setup.zip".format(chain_id), ".anoma"], capture_output=True) 
 
 
 def download_genesis_template(repository_owner: str, template_name: str, to: str):
