@@ -17,18 +17,30 @@ def unzip(path: str, zip_name: str):
 def publish_wasm(path: str, file_name: str, bucket: str):
     return subprocess.run(["aws", "s3", "cp", "{}/{}".format(path, file_name), "s3://{}".format(bucket), "--acl", "public-read"], capture_output=True)
 
-def download_genesis_template(repository_owner:str, template_name: str, to: str):
-    url = "https://raw.githubusercontent.com/{}/anoma-network-config/master/templates/{}.toml".format(repository_owner, template_name)
+
+def upload_chain_data_archive(path: str, bucket: str):
+    return subprocess.run(["aws", "s3", "cp", path, "s3://{}".format(bucket)], capture_output=True)
+
+
+def zip_setup_folder(chain_id: str):
+    return subprocess.run(["zip" "-r", "{}-setup.zip".format(chain_id), ".anoma"], capture_output=True) 
+
+
+def download_genesis_template(repository_owner: str, template_name: str, to: str):
+    url = "https://raw.githubusercontent.com/{}/anoma-network-config/master/templates/{}.toml".format(
+        repository_owner, template_name)
     return subprocess.run(["curl", "-s", url, "-o", "{}/template.toml".format(to)])
-    
+
 
 def generate_genesis_template(folder: str, chain_prefix: str):
-    permissions_command_outcome = subprocess.run(["chmod", "+x", "{}/namadac".format(folder)], capture_output=True)
+    permissions_command_outcome = subprocess.run(
+        ["chmod", "+x", "{}/namadac".format(folder)], capture_output=True)
     if permissions_command_outcome.returncode != 0:
         return permissions_command_outcome
-    command = "{0}/namadac utils init-network --chain-prefix {1} --genesis-path {0}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(folder, chain_prefix)
-    print(command.split(' '))
+    command = "{0}/namadac utils init-network --chain-prefix {1} --genesis-path {0}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(
+        folder, chain_prefix)
     return subprocess.run(command.split(" "), capture_output=True)
+
 
 def debug(file_path: str):
     output = subprocess.run(['cat', file_path], capture_output=True)
@@ -37,6 +49,7 @@ def debug(file_path: str):
         exit(1)
     else:
         print(output.stdout)
+
 
 def log(data: str):
     print(data)
@@ -48,6 +61,7 @@ REPOSITORY_OWNER = environ['GITHUB_REPOSITORY_OWNER']
 TMP_DIRECTORY = gettempdir()
 ARTIFACT_PER_PAGE = 75
 WASM_BUCKET = 'namada-wasm-master'
+CHAIN_DATA_BUCKET = 'namada-chain-data-master'
 
 read_org_api = GhApi(token=READ_ORG_TOKEN)
 api = GhApi(owner=REPOSITORY_OWNER, repo="namada", token=TOKEN)
@@ -102,7 +116,7 @@ for artifact in artifacts['artifacts']:
 
         steps_done += 1
         log("Done wasm!")
-    
+
     elif 'binaries' in artifact['name'] and artifact['workflow_run']['head_sha'] == head_sha and not artifact['expired']:
         artifact_download_url = artifact['archive_download_url']
 
@@ -123,23 +137,43 @@ if steps_done != 2:
     print("Bad binaries/wasm!")
     exit(1)
 
-template_command_outcome = download_genesis_template(REPOSITORY_OWNER, template_name, TMP_DIRECTORY)
+template_command_outcome = download_genesis_template(
+    REPOSITORY_OWNER, template_name, TMP_DIRECTORY)
 if template_command_outcome.returncode != 0:
     log(template_command_outcome)
     exit(1)
 
-template_command_outcome = generate_genesis_template(TMP_DIRECTORY, 'namada-{}'.format(short_sha))
+template_command_outcome = generate_genesis_template(
+    TMP_DIRECTORY, 'namada-{}'.format(short_sha))
 if template_command_outcome.returncode != 0:
     log(template_command_outcome.stderr)
     exit(1)
 
-genesis_folder_path = template_command_outcome.stdout.decode('utf-8').splitlines()[-2].split(" ")[4]
-release_archive_path = template_command_outcome.stdout.decode('utf-8').splitlines()[-1].split(" ")[4]
+genesis_folder_path = template_command_outcome.stdout.decode(
+    'utf-8').splitlines()[-2].split(" ")[4]
+release_archive_path = template_command_outcome.stdout.decode(
+    'utf-8').splitlines()[-1].split(" ")[4]
+chain_id = genesis_folder_path.split("/")[1].split('.')[0]
 
+log("ChainId: {}".format(chain_id))
 log("Genesis folder: {}".format(genesis_folder_path))
 log("Archive: {}".format(release_archive_path))
 
+zip_setup_command_outcome = zip_setup_folder(chain_id)
+if zip_setup_command_outcome.returncode != 0:
+    log(zip_setup_command_outcome.stderr)
+    exit(1)
 
+upload_release_command_outcome = upload_chain_data_archive(release_archive_path, CHAIN_DATA_BUCKET)
+if upload_release_command_outcome.returncode != 0:
+    log(upload_release_command_outcome.stderr)
+    exit(1)
 
+log("Release archive uploaded!")
 
+upload_setup_command_outcome = upload_chain_data_archive("{}-setup.zip".format(chain_id), CHAIN_DATA_BUCKET)
+if upload_release_command_outcome.returncode != 0:
+    log(upload_release_command_outcome.stderr)
+    exit(1)
 
+log("Chain setup uploaded!")
