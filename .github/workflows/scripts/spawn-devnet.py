@@ -4,6 +4,7 @@ from json import loads, load
 from tempfile import gettempdir
 import subprocess
 import re
+import json
 
 
 def download_artifact(url: str, path: str, zip_name: str, token: str):
@@ -40,6 +41,18 @@ def generate_genesis_template(folder: str, chain_prefix: str):
     command = "{0}/namadac utils init-network --chain-prefix {1} --genesis-path {0}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(
         folder, chain_prefix)
     return subprocess.run(command.split(" "), capture_output=True)
+
+
+def dispatch_release_workflow(chain_id: str, repository_owner: str, github_token: str):
+    data = {
+        "event_type": "release",
+        "client_payload": {
+            "chain-id": chain_id
+        }
+    }
+    return subprocess.run([
+        "curl", "-s", "-d", json.dumps(data), "-H", "Content-Type: application/json", "-H", "Authorization: token {}".format(github_token), "-H", "Accept: application/vnd.github.everest-preview+json", "https://api.github.com/repos/{}/anoma-network-config/dispatches".format(repository_owner)
+    ], capture_output=True)
 
 
 def debug(file_path: str):
@@ -177,3 +190,10 @@ if upload_release_command_outcome.returncode != 0:
     exit(1)
 
 log("Chain setup uploaded!")
+
+dispath_command_outcome = dispatch_release_workflow(chain_id, REPOSITORY_OWNER, TOKEN)
+if dispath_command_outcome.returncode != 0:
+    log(dispath_command_outcome.stderr)
+    exit(1)
+
+log("Dispatched anoma-network-config workflow!")
