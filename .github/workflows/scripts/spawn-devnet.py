@@ -70,6 +70,7 @@ def log(data: str):
 
 TOKEN = environ["GITHUB_TOKEN"]
 READ_ORG_TOKEN = environ['GITHUB_READ_ORG_TOKEN']
+DISPATCH_TOKEN = environ['GITHUB_DISPATCH_TOKEN']
 REPOSITORY_OWNER = environ['GITHUB_REPOSITORY_OWNER']
 TMP_DIRECTORY = gettempdir()
 ARTIFACT_PER_PAGE = 75
@@ -191,7 +192,7 @@ if upload_release_command_outcome.returncode != 0:
 
 log("Chain setup uploaded!")
 
-dispath_command_outcome = dispatch_release_workflow(chain_id, REPOSITORY_OWNER, TOKEN)
+dispath_command_outcome = dispatch_release_workflow(chain_id, REPOSITORY_OWNER, DISPATCH_TOKEN)
 if dispath_command_outcome.returncode != 0:
     log(dispath_command_outcome.stderr)
     exit(1)
