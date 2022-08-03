@@ -332,3 +332,10 @@ if upload_release_command_outcome.returncode != 0:
     exit(1)
 
 log("Chain setup uploaded!")
+
+dispath_command_outcome = dispatch_release_workflow(chain_id, REPOSITORY_OWNER, DISPATCH_TOKEN)
+if dispath_command_outcome.returncode != 0:
+    log(dispath_command_outcome.stderr)
+    exit(1)
+
+log("Dispatched anoma-network-config workflow!")

@@ -54,7 +54,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          pip3 install ghapi >/dev/null 2>&1
+          pip3 install ghapi boto3 toml >/dev/null 2>&1
           python3 .github/workflows/scripts/${{ matrix.make.command }}
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
