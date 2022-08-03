@@ -5,10 +5,13 @@ from tempfile import gettempdir
 import subprocess
 import re
 import json
+import boto3
+import toml
+from datetime import timedelta, date
 
 
 def download_artifact(url: str, path: str, zip_name: str, token: str):
-    return subprocess.run(["curl", "-s", "-H", "Accept: application/vnd.github+json".format(token), "-H", "Authorization: token {}".format(token), url, "-L", "-o", "{}/{}.zip".format(path, zip_name)], capture_output=True)
+    return subprocess.run(["curl", "-s", "--fail-with-body", "-H", "Accept: application/vnd.github+json".format(token), "-H", "Authorization: token {}".format(token), url, "-L", "-o", "{}/{}.zip".format(path, zip_name)], capture_output=True)
 
 
 def unzip(path: str, zip_name: str):
@@ -30,7 +33,7 @@ def zip_setup_folder(chain_id: str):
 def download_genesis_template(repository_owner: str, template_name: str, to: str):
     url = "https://raw.githubusercontent.com/{}/anoma-network-config/master/templates/{}.toml".format(
         repository_owner, template_name)
-    return subprocess.run(["curl", "-s", url, "-o", "{}/template.toml".format(to)])
+    return subprocess.run(["curl", "-s", "--fail-with-body", url, "-o", "{}/template.toml".format(to)])
 
 
 def generate_genesis_template(folder: str, chain_prefix: str):
@@ -38,7 +41,7 @@ def generate_genesis_template(folder: str, chain_prefix: str):
         ["chmod", "+x", "{}/namadac".format(folder)], capture_output=True)
     if permissions_command_outcome.returncode != 0:
         return permissions_command_outcome
-    command = "{0}/namadac utils init-network --chain-prefix {1} --genesis-path {0}/template.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(
+    command = "{0}/namadac utils init-network --chain-prefix {1} --genesis-path {0}/genesis.toml --consensus-timeout-commit 10s --wasm-checksums-path {0}/checksums.json --unsafe-dont-encrypt --allow-duplicate-ip".format(
         folder, chain_prefix)
     return subprocess.run(command.split(" "), capture_output=True)
 
@@ -47,7 +50,8 @@ def dispatch_release_workflow(chain_id: str, repository_owner: str, github_token
     data = {
         "event_type": "release",
         "client_payload": {
-            "chain-id": chain_id
+            "chain-id": chain_id,
+            "is_prelease": True
         }
     }
     return subprocess.run([
@@ -64,6 +68,21 @@ def debug(file_path: str):
         print(output.stdout)
 
 
+def read_toml(path: str):
+    return toml.loads(open(path, 'r').read())
+
+
+def write_toml(data, path: str):
+    return toml.dump(data, open(path, 'w'))
+
+
+def fix_genesis_template(template, ips):
+    for index, validator in enumerate(template['validator']):
+        validator_port = template['validator'][validator]['net_address'][:-5]
+        template['validator'][validator]['net_address'] = "{}:{}".format(ips[index], validator_port)
+    return template
+
+
 def log(data: str):
     print(data)
 
@@ -76,6 +95,10 @@ TMP_DIRECTORY = gettempdir()
 ARTIFACT_PER_PAGE = 75
 WASM_BUCKET = 'namada-wasm-master'
 CHAIN_DATA_BUCKET = 'namada-chain-data-master'
+LOG_GROUP_NAME = "chain-{}-logs"
+
+EC2_CLIENT = boto3.client('ec2')
+LOG_CLIENT = boto3.client('logs')
 
 read_org_api = GhApi(token=READ_ORG_TOKEN)
 api = GhApi(owner=REPOSITORY_OWNER, repo="namada", token=TOKEN)
@@ -151,17 +174,120 @@ if steps_done != 2:
     print("Bad binaries/wasm!")
     exit(1)
 
+log("Download genesis template...")
+
 template_command_outcome = download_genesis_template(
     REPOSITORY_OWNER, template_name, TMP_DIRECTORY)
 if template_command_outcome.returncode != 0:
     log(template_command_outcome)
     exit(1)
 
+chain_prefix = 'namada-{}'.format(short_sha)
+genesis_template_path = "{}/template.toml".format(TMP_DIRECTORY)
+genesis_template = read_toml(genesis_template_path)
+total_validators = len(genesis_template['validator'].keys())
+new_genesis_path = "{}/genesis.toml".format(TMP_DIRECTORY)
+
+log("Creating ec2 fleet...")
+
+instance_prices = EC2_CLIENT.describe_spot_price_history(
+    InstanceTypes=['t3a.medium'],
+    MaxResults=1,
+    ProductDescriptions=['Linux/UNIX (Amazon VPC)'],
+    AvailabilityZone='eu-west-1a'
+)
+price = instance_prices['SpotPriceHistory'].pop()['SpotPrice']
+
+spot_price = float(price) + float(price) * 0.1
+retention_period_end_date = date.today() + timedelta(days=retention_period)
+
+response = EC2_CLIENT.run_instances(
+    BlockDeviceMappings=[
+        {
+            'DeviceName': '/dev/sda1',
+            'Ebs': {
+                'DeleteOnTermination': True,
+                'VolumeSize': 50,
+                'VolumeType': 'gp3'
+            },
+        },
+    ],
+    IamInstanceProfile={
+        'Arn': 'arn:aws:iam::375643557360:instance-profile/anoma-devnet-machine-role'
+    },
+    ImageId='ami-093e35aafaad75b9f',
+    InstanceType='t3a.medium',
+    MaxCount=total_validators,
+    MinCount=total_validators,
+    Monitoring={
+        'Enabled': False
+    },
+    NetworkInterfaces=[{
+        'SubnetId': 'subnet-13bb5558',
+        'DeviceIndex': 0,
+        'AssociatePublicIpAddress': True,
+        'Groups': ['sg-0e2f664342a0907f2', 'sg-0cf3547cda9669158'],
+    }],
+    KeyName='anoma-playnet',
+    InstanceMarketOptions={
+        'MarketType': 'spot',
+        'SpotOptions': {
+            'MaxPrice': str(spot_price),
+            'SpotInstanceType': 'one-time',
+            'InstanceInterruptionBehavior': 'terminate'
+        }
+    },
+    TagSpecifications=[
+        {
+            'ResourceType': 'instance',
+            'Tags': [
+                {
+                    'Key': 'Project',
+                    'Value': 'AnomaNetwork'
+                },
+                {
+                    'Key': 'CostCenter',
+                    'Value': 'Anoma'
+                },
+                {
+                    'Key': 'ChainPrefix',
+                    'Value': chain_prefix
+                },
+                {
+                    'Key': 'ManagedBy',
+                    'Value': 'github/workflows/spawn-devenet'
+                },
+                {
+                    'Key': 'Monitoring',
+                    'Value': "ON"
+                },
+                {
+                    'Key': 'RetentionPeriod',
+                    'Value': str(retention_period_end_date)
+                }
+            ],
+        }
+    ]
+)
+instances_id = [instance['InstanceId'] for instance in response['Instances']]
+EC2_CLIENT.get_waiter('instance_status_ok').wait(InstanceIds=instances_id)
+
+instance_ips = [instance['PublicIpAddress'] for instance in EC2_CLIENT.describe_instances(InstanceIds=instances_id)['Reservations'][0]['Instances']]
+
+log("Spawned {} instances!".format(total_validators))
+
+fixed_genesis_template = fix_genesis_template(genesis_template, instance_ips)
+write_toml(fixed_genesis_template, new_genesis_path)
+
+log("Creating genesis file...")
+
 template_command_outcome = generate_genesis_template(
-    TMP_DIRECTORY, 'namada-{}'.format(short_sha))
+    TMP_DIRECTORY, chain_prefix)
 if template_command_outcome.returncode != 0:
     log(template_command_outcome.stderr)
     exit(1)
+
+log("Genesis file created!")
 
 genesis_folder_path = template_command_outcome.stdout.decode(
     'utf-8').splitlines()[-2].split(" ")[4]
@@ -172,6 +298,21 @@ chain_id = genesis_folder_path.split("/")[1][:-5]
 log("ChainId: {}".format(chain_id))
 log("Genesis folder: {}".format(genesis_folder_path))
 log("Archive: {}".format(release_archive_path))
+
+log_group_name = LOG_GROUP_NAME.format(chain_id)
+LOG_CLIENT.create_log_group(
+    logGroupName=log_group_name,
+    tags={
+        'Project': 'AnomaNetwork',
+        'CostCenter': 'Anoma',
+        'ChainId': chain_id,
+        'ManagedBy': 'github/workflows/spawn-devenet'
+    }
+)
+LOG_CLIENT.put_retention_policy(
+    logGroupName=log_group_name,
+    retentionInDays=retention_period
+)
 
 zip_setup_command_outcome = zip_setup_folder(chain_id)
 if zip_setup_command_outcome.returncode != 0:
@@ -191,10 +332,3 @@ if upload_release_command_outcome.returncode != 0:
     exit(1)
 
 log("Chain setup uploaded!")
-
-dispath_command_outcome = dispatch_release_workflow(chain_id, REPOSITORY_OWNER, DISPATCH_TOKEN)
-if dispath_command_outcome.returncode != 0:
-    log(dispath_command_outcome.stderr)
-    exit(1)
-
-log("Dispatched anoma-network-config workflow!")
