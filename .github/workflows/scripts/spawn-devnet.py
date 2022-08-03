@@ -55,7 +55,7 @@ def dispatch_release_workflow(chain_id: str, repository_owner: str, github_token
         }
     }
     return subprocess.run([
-        "curl", "-s", "-d", json.dumps(data), "-H", "Content-Type: application/json", "-H", "Authorization: token {}".format(github_token), "-H", "Accept: application/vnd.github.everest-preview+json", "https://api.github.com/repos/{}/anoma-network-config/dispatches".format(repository_owner)
+        "curl", "-d", json.dumps(data), "-H", "Content-Type: application/json", "-H", "Authorization: token {}".format(github_token), "-H", "Accept: application/vnd.github.everest-preview+json", "https://api.github.com/repos/{}/anoma-network-config/dispatches".format(repository_owner)
     ], capture_output=True)
 
 
