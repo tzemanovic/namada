@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         make:
           - name: tendermint-unreleased
             repository: heliaxdev/tendermint
@@ -33,5 +33,5 @@ jobs:
       - name: Upload ${{ matrix.make.name }} binary
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.make.name }}-${{ matrix.make.tendermint_version }}
+          name: ${{ matrix.os }}-${{ matrix.make.name }}-${{ matrix.make.tendermint_version }}
           path: tendermint/build/tendermint
