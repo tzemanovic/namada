@@ -33,6 +33,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+      - name: Get tags
+        run: git fetch --tags origin
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
