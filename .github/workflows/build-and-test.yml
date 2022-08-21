@@ -181,7 +181,7 @@ jobs:
       - name: Download anoma binaries
         uses: actions/download-artifact@v3
         with:
-          name: binaries${{ matrix.make.suffix }}-${{ github.sha }}
+          name: binaries-${{ matrix.os }}-${{ matrix.make.suffix }}-${{ github.sha }}
           path: ./target/release/
       - name: Change permissions
         run: |
@@ -219,7 +219,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         make:
           - name: ABCI Release build
             suffix: ''
@@ -279,7 +279,7 @@ jobs:
       - name: Upload target binaries
         uses: actions/upload-artifact@v3
         with:
-          name: binaries${{ matrix.make.suffix }}-${{ github.sha }}
+          name: binaries-${{ matrix.os }}-${{ matrix.make.suffix }}-${{ github.sha }}
           path: |
             target/release/namada
             target/release/namadac
