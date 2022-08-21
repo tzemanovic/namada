@@ -89,14 +89,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         nightly_version: [nightly-2022-05-20]
         make:
           - name: ABCI
             suffix: ''
             cache_key: anoma
             cache_version: v1
-            wait_for: anoma-release (ubuntu-latest, ABCI Release build, anoma-e2e-release, v1)
             tendermint_artifact: tendermint-unreleased-559fb33ff9b27503ce7ac1c7d8589fe1d8b3e900
 
     env:
@@ -167,7 +166,7 @@ jobs:
         uses: lewagon/wait-on-check-action@master
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
-          check-name: ${{ matrix.make.wait_for }}
+          check-name: anoma-release (${{ matrix.os }}, ABCI Release build, anoma-e2e-release, v1)
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 30
           allowed-conclusions: success
@@ -177,7 +176,7 @@ jobs:
           github_token: ${{secrets.GITHUB_TOKEN}}
           workflow: build-tendermint.yml
           workflow_conclusion: success
-          name: ${{ matrix.make.tendermint_artifact }}
+          name: ${{ matrix.os }}-${{ matrix.make.tendermint_artifact }}
           path: /usr/local/bin
       - name: Download anoma binaries
         uses: actions/download-artifact@v3
