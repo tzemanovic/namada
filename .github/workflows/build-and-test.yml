@@ -206,7 +206,7 @@ jobs:
           name: logs-e2e${{ matrix.make.suffix }}-${{ github.sha }}
           path: |
             /tmp/.*/logs/
-            /var/folders/*/*/*/.tmp*/logs/
+            /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T/.tmp*/logs/
           retention-days: 5
       - name: Print sccache stats
         if: always()
