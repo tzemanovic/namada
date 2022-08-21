@@ -203,7 +203,7 @@ jobs:
         if: success() || failure()
         uses: actions/upload-artifact@v3
         with:
-          name: logs-e2e${{ matrix.make.suffix }}-${{ github.sha }}
+          name: logs-e2e-${{ matrix.os }}-${{ matrix.make.suffix }}-${{ github.sha }}
           path: |
             /tmp/.*/logs/
             /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T/.tmp*/logs/
