@@ -206,7 +206,9 @@ jobs:
           name: logs-e2e-${{ matrix.os }}-${{ matrix.make.suffix }}-${{ github.sha }}
           path: |
             /tmp/.*/logs/
+            /tmp/.*/e2e-test.*/setup/validator-*/.anoma/logs/*.log
             /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T/.tmp*/logs/
+            /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T/.tmp*/e2e-test.*/setup/validator-*/.anoma/logs/*.log
           retention-days: 5
       - name: Print sccache stats
         if: always()
