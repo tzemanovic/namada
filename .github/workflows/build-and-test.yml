@@ -196,7 +196,7 @@ jobs:
           ANOMA_TENDERMINT_WEBSOCKET_TIMEOUT: 20
           ANOMA_E2E_USE_PREBUILT_BINARIES: "true"
           ANOMA_E2E_KEEP_TEMP: "true"
-          ENV_VAR_TM_STDOUT: "false"
+          ANOMA_TM_STDOUT: "true"
           ANOMA_LOG_COLOR: "false"
           ANOMA_LOG: "info"
       - name: Upload e2e logs
