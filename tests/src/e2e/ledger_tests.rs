@@ -35,6 +35,7 @@ use crate::{run, run_as};
 /// combinations from fresh state, the node starts-up successfully for both a
 /// validator and non-validator user.
 #[test]
+#[ignore]
 fn run_ledger() -> Result<()> {
     let test = setup::single_node_net()?;
     let cmd_combinations = vec![vec!["ledger"], vec!["ledger", "run"]];
@@ -63,6 +64,7 @@ fn run_ledger() -> Result<()> {
 /// 2. Submit a valid token transfer tx
 /// 3. Check that all the nodes processed the tx with the same result
 #[test]
+#[ignore]
 fn test_node_connectivity() -> Result<()> {
     // Setup 2 genesis validator nodes
     let test =
@@ -131,6 +133,7 @@ fn test_node_connectivity() -> Result<()> {
 /// 3. Check that the node detects this
 /// 4. Check that the node shuts down
 #[test]
+#[ignore]
 fn test_anoma_shuts_down_if_tendermint_dies() -> Result<()> {
     let test = setup::single_node_net()?;
 
@@ -167,6 +170,7 @@ fn test_anoma_shuts_down_if_tendermint_dies() -> Result<()> {
 /// 5. Reset the ledger's state
 /// 6. Run the ledger again, it should start from fresh state
 #[test]
+#[ignore]
 fn run_ledger_load_state_and_reset() -> Result<()> {
     let test = setup::single_node_net()?;
 
@@ -406,6 +410,7 @@ fn ledger_txs_and_queries() -> Result<()> {
 /// 4. Restart the ledger
 /// 5. Submit and invalid transactions (malformed)
 #[test]
+#[ignore]
 fn invalid_transactions() -> Result<()> {
     let test = setup::single_node_net()?;
 
@@ -907,6 +912,7 @@ fn pos_init_validator() -> Result<()> {
 /// 1. Run the ledger node with 10s consensus timeout
 /// 2. Spawn threads each submitting token transfer tx
 #[test]
+#[ignore]
 fn ledger_many_txs_in_a_block() -> Result<()> {
     let test = Arc::new(setup::network(
         |genesis| genesis,
@@ -1507,6 +1513,7 @@ fn generate_proposal_json(
 /// 4. Submit a valid token transfer tx from one validator to the other
 /// 5. Check that all the nodes processed the tx with the same result
 #[test]
+#[ignore]
 fn test_genesis_validators() -> Result<()> {
     use std::collections::HashMap;
     use std::net::SocketAddr;
