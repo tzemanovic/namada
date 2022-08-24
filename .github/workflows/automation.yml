@@ -63,7 +63,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_READ_ORG_TOKEN: ${{ secrets.GT_READ_ORG }}
           GITHUB_DISPATCH_TOKEN: ${{ secrets.GT_DISPATCH }}
-          BINARIES_COMMIT_SHA: ${{ steps.comment-branch.outputs.head_ref }}
+          BINARIES_COMMIT_SHA: ${{ steps.comment-branch.outputs.head_sha }}
           USER_DATA: ${{ secrets.USER_DATA }}
           ANOMA_LOG_COLOR: "false"
           RUST_BACKTRACE: 1
