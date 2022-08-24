@@ -198,7 +198,8 @@ jobs:
           ANOMA_E2E_KEEP_TEMP: "true"
           ANOMA_TM_STDOUT: "true"
           ANOMA_LOG_COLOR: "false"
-          ANOMA_LOG: "info"
+          TM_LOG_LEVEL: "debug"
+          ANOMA_LOG: "debug"
       - name: Upload e2e logs
         if: success() || failure()
         uses: actions/upload-artifact@v3
