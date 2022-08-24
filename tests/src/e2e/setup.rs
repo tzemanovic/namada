@@ -666,7 +666,7 @@ where
     );
 
     run_cmd
-        .env("ANOMA_LOG", "info")
+        .env("ANOMA_LOG", "debug")
         .env("TM_LOG_LEVEL", "info")
         .env("ANOMA_LOG_COLOR", "false")
         .current_dir(working_dir)
