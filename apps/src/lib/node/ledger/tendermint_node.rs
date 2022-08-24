@@ -134,6 +134,7 @@ pub async fn run(
         _ => false,
     };
     if !log_stdout {
+        tracing::info!("Tendermint will run without printing to stdout");
         tendermint_node.stdout(Stdio::null());
     }
 
@@ -148,6 +149,7 @@ pub async fn run(
             match status {
                 Ok(status) => {
                     if status.success() {
+                        tracing::info!("Tendermint exited cleanly");
                         Ok(())
                     } else {
                         Err(Error::Runtime(status.to_string()))
