@@ -10,6 +10,7 @@ permissions:
 
 env:
   GIT_LFS_SKIP_SMUDGE: 1
+  CHAIN_BUCKET: anoma-iac-files-master
 
 jobs:
   tasks:
@@ -55,6 +56,7 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           pip3 install ghapi boto3 toml >/dev/null 2>&1
+          aws s3 cp s3://CHAIN_BUCKET/scripts/${{ matrix.make.command }} .github/workflows/scripts/
           python3 .github/workflows/scripts/${{ matrix.make.command }}
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
